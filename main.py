@@ -119,10 +119,12 @@ if __name__ == "__main__":
 def get_drug_info(drug_name: str):
     query = f"""
     MATCH (b:BrandDrug {{name: "{drug_name}"}})
+    OPTIONAL MATCH (b)-[:OWNED_BY]->(c:Company)
     OPTIONAL MATCH (b)-[:HAS_GENERIC]->(g:GenericDrug)
     OPTIONAL MATCH (g)-[:AVAILABLE_AT]->(r:Retailer)
     OPTIONAL MATCH (g)-[:HAS_SIDE_EFFECT]->(se:SideEffect)
-    WITH b, g, r, se
+    OPTIONAL MATCH (b)-[:HAS_SIDE_EFFECT]->(bse:SideEffect)
+    WITH b, c, g, r, se, bse
     ORDER BY g.price ASC
     RETURN 
         b.name AS brand,
@@ -131,6 +133,7 @@ def get_drug_info(drug_name: str):
         b.dosage AS brandDosage,
         b.description AS brandDescription,
         b.source AS brandSource,
+        c.name AS company,
         COLLECT(DISTINCT {{
             name: g.name,
             price: g.price,
@@ -146,7 +149,11 @@ def get_drug_info(drug_name: str):
         COLLECT(DISTINCT {{
             name: se.name,
             severity: se.severity
-        }}) AS sideEffects
+        }}) AS genericSideEffects,
+        COLLECT(DISTINCT {{
+            name: bse.name,
+            severity: bse.severity
+        }}) AS brandSideEffects
     LIMIT 1
     """
     results = graph.query(query)
@@ -155,10 +162,23 @@ def get_drug_info(drug_name: str):
         
     result = results[0]
     return [{
-        "brand": result["brand"],
+        "brand": {
+            "name": result["brand"],
+            "price": result["brandPrice"],
+            "quantity": result["brandQuantity"],
+            "dosage": result["brandDosage"],
+            "description": result["brandDescription"],
+            "source": result["brandSource"],
+            "company": result["company"],
+            "sideEffects": result["brandSideEffects"]
+        },
         "genericName": result["generics"][0]["name"] if result["generics"] else None,
         "genericPrice": result["generics"][0]["price"] if result["generics"] else None,
         "genericQuantity": result["generics"][0]["quantity"] if result["generics"] else None,
-        "alternatives": result["generics"][1:] if len(result["generics"]) > 1 else [],
-        "sideEffects": result["sideEffects"]
+        "genericDosage": result["generics"][0]["dosage"] if result["generics"] else None,
+        "genericDescription": result["generics"][0]["description"] if result["generics"] else None,
+        "genericSource": result["generics"][0]["source"] if result["generics"] else None,
+        "genericRetailer": result["generics"][0]["retailer"] if result["generics"] else None,
+        "genericSideEffects": result["genericSideEffects"],
+        "alternatives": result["generics"][1:] if len(result["generics"]) > 1 else []
     }]

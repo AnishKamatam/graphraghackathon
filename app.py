@@ -19,36 +19,46 @@ def ask():
             return jsonify({"error": "Drug not found"}), 404
 
         result = results[0]
+        
+        # Brand drug information
         brand = {
             "name": result["brand"],
-            "price": 0,  # Brand price not currently stored
-            "quantity": "N/A",
-            "dosage": "N/A",
-            "description": "Brand name medication",
-            "source": "MedWise Database"
+            "price": result.get("brandPrice", 0),
+            "quantity": result.get("brandQuantity", "N/A"),
+            "dosage": result.get("brandDosage", "N/A"),
+            "description": result.get("brandDescription", "Brand name medication"),
+            "source": result.get("brandSource", "MedWise Database"),
+            "company": result.get("company", "N/A"),
+            "sideEffects": result.get("brandSideEffects", []),
+            "retailer": result.get("brandRetailer")
         }
-
+        
+        # Generic drug information
         generic = None
-        if result["genericName"]:
+        if result.get("genericName"):
             generic = {
                 "name": result["genericName"],
-                "price": result["genericPrice"],
-                "quantity": result["genericQuantity"],
-                "dosage": "N/A",
-                "description": "Generic alternative",
-                "source": "MedWise Database"
+                "price": result.get("genericPrice", 0),
+                "quantity": result.get("genericQuantity", "N/A"),
+                "dosage": result.get("genericDosage", "N/A"),
+                "description": result.get("genericDescription", "Generic alternative"),
+                "source": result.get("genericSource", "MedWise Database"),
+                "retailer": result.get("genericRetailer"),
+                "sideEffects": result.get("genericSideEffects", [])
             }
 
+        # Alternative drugs
         alternatives = []
-        for alt in result["alternatives"]:
+        for alt in result.get("alternatives", []):
             alternatives.append({
-                "name": alt["name"],
-                "price": alt["price"],
-                "quantity": alt["quantity"],
+                "name": alt.get("name", "Unknown"),
+                "price": alt.get("price", 0),
+                "quantity": alt.get("quantity", "N/A"),
                 "dosage": alt.get("dosage", "N/A"),
                 "description": alt.get("description", "Alternative medication"),
                 "source": alt.get("source", "MedWise Database"),
-                "retailer": alt.get("retailer")
+                "retailer": alt.get("retailer"),
+                "sideEffects": alt.get("sideEffects", [])
             })
 
         return jsonify({
@@ -57,6 +67,7 @@ def ask():
             "alternatives": alternatives
         })
     except Exception as e:
+        print(f"Error: {str(e)}")  # Add logging
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
