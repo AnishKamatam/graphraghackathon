@@ -1,27 +1,64 @@
 import { useState } from "react";
+import DrugCard from "./DrugCard";
+
+interface SideEffect {
+  name: string;
+  severity: string;
+}
+
+interface Retailer {
+  name: string;
+  url?: string;
+}
+
+interface DrugInfo {
+  name: string;
+  price: number;
+  quantity: string;
+  dosage: string;
+  description: string;
+  source: string;
+  retailer?: Retailer;
+  sideEffects?: SideEffect[];
+}
+
+interface Response {
+  brand?: string;
+  generic?: DrugInfo;
+  alternatives?: DrugInfo[];
+  error?: string;
+}
 
 export default function QueryForm() {
   const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
+  const [response, setResponse] = useState<Response | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const askQuestion = async () => {
     if (!question.trim()) return;
 
     setLoading(true);
-    setAnswer("");
+    setResponse(null);
+    setError(null);
 
     try {
-        const res = await fetch("http://localhost:5050/ask", {
+      const res = await fetch("http://localhost:5051/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
       });
 
       const data = await res.json();
-      setAnswer(data.answer);
+      
+      if (data.error) {
+        setError(data.error);
+      } else {
+        setResponse(data);
+      }
     } catch (err) {
-      setAnswer("⚠️ There was an error contacting the MedWise server.");
+      setError("Failed to connect to the server");
+      console.error("Error:", err);
     }
 
     setLoading(false);
@@ -46,9 +83,35 @@ export default function QueryForm() {
         </button>
       </div>
 
-      {answer && (
-        <div className="w-full max-w-2xl mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-100">
-          <p className="text-gray-800">{answer}</p>
+      {error && (
+        <div className="mt-6 p-4 bg-red-50 text-red-600 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {response && (
+        <div className="flex flex-col items-center gap-6 mt-6 w-full max-w-4xl">
+          {response.brand && (
+            <DrugCard 
+              title="Brand" 
+              drug={{
+                name: response.brand,
+                price: 0,
+                quantity: "N/A",
+                dosage: "N/A",
+                description: "Brand name medication",
+                source: "MedWise Database"
+              }} 
+            />
+          )}
+          {response.generic && (
+            <DrugCard title="Generic" drug={response.generic} />
+          )}
+          <div className="flex flex-wrap gap-4 justify-center w-full">
+            {response.alternatives?.map((alt, i) => (
+              <DrugCard key={i} title={`Alternative ${i + 1}`} drug={alt} />
+            ))}
+          </div>
         </div>
       )}
     </div>
