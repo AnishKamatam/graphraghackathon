@@ -28,27 +28,27 @@ export default function QueryForm() {
   };
 
   return (
-    <div className="p-6 max-w-xl mx-auto">
-      <h1 className="text-3xl font-bold mb-4">💊 MedWise</h1>
-      <p className="mb-4 text-gray-700">Ask about brand-name drugs, generic alternatives, and prices.</p>
-      <input
-        type="text"
-        value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-        placeholder="e.g. What is the cheapest generic for Zyrtec?"
-        className="border border-gray-300 rounded px-4 py-2 w-full mb-4"
-      />
-      <button
-        onClick={askQuestion}
-        disabled={loading}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      >
-        {loading ? "Asking..." : "Ask MedWise"}
-      </button>
+    <div className="w-full flex flex-col items-center justify-center p-6">
+      <h1 className="text-4xl font-bold mb-8 text-center">MedWise</h1>
+      <div className="w-full max-w-2xl flex flex-col items-center gap-4">
+        <input
+          type="text"
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          className="w-full h-16 px-6 text-lg rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
+        />
+        <button
+          onClick={askQuestion}
+          disabled={loading}
+          className="px-6 py-3 text-lg rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+        >
+          {loading ? "Asking..." : "Ask MedWise"}
+        </button>
+      </div>
 
       {answer && (
-        <div className="mt-6 p-4 bg-green-50 border-l-4 border-green-600 text-green-800 rounded">
-          <strong>🧠 Answer:</strong> {answer}
+        <div className="w-full max-w-2xl mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-100">
+          <p className="text-gray-800">{answer}</p>
         </div>
       )}
     </div>
